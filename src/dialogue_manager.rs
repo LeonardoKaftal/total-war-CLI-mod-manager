@@ -1,7 +1,26 @@
 use std::io;
 use std::io::{stdin, stdout, Write};
 use termion::{color, style, terminal_size};
-use crate::path_manager::{find_if_mods_path_file_is_present, find_mods_path_written_in_file, save_directories_paths_in_file};
+use crate::game_manager::Games;
+use crate::user_config_manager::{find_if_mods_path_file_is_present, find_mods_path_written_in_file, save_directories_paths_in_file};
+
+pub fn print_title() {
+    let title = "TOTAL WAR MOD MANAGER";
+
+    let mut stdout = stdout();
+    let mut handle = stdout.lock();
+
+    if let Ok((width, _)) = terminal_size() {
+        let padding = (width as usize - title.len()) / 2;
+        let padded_title = format!("{:padding$}{}", "", title, padding = padding);
+        writeln!(handle, "{}{}{}{}", color::Fg(color::Red), padded_title, color::Fg(color::Reset), style::Reset).unwrap();
+    }
+    else {
+        writeln!(handle, "{}{}{}", color::Fg(color::Red), title, color::Fg(color::Reset)).unwrap();
+    }
+
+    stdout.flush().unwrap()
+}
 
 
 pub fn ask_for_directories_dialogue() -> (String, String) {
@@ -19,7 +38,6 @@ pub fn ask_for_directories_dialogue() -> (String, String) {
         aks_for_directories_path()
     }
 }
-
 
 
 pub fn aks_for_directories_path() -> (String, String) {
@@ -60,20 +78,20 @@ pub fn user_prompt_yes() -> bool {
     return response.to_ascii_lowercase().starts_with('y')
 }
 
-pub fn print_title() {
-    let title = "TOTAL WAR MOD MANAGER";
+pub fn ask_user_what_games() -> Games {
+    let mut response = String::new();
+    println!("What game do you want to enable the mod for?");
+    println!("1: Attila Total War");
+    println!("2: Rome II Total War");
+    println!("3: Napoleon Total War");
+    println!("4: Shogun II Total War");
+    stdin().read_line(&mut response).expect("Impossible to read the input");
+    stdout().flush().unwrap();
 
-    let mut stdout = stdout();
-    let mut handle = stdout.lock();
-
-    if let Ok((width, _)) = terminal_size() {
-        let padding = (width as usize - title.len()) / 2;
-        let padded_title = format!("{:padding$}{}", "", title, padding = padding);
-        writeln!(handle, "{}{}{}{}", color::Fg(color::Red), padded_title, color::Fg(color::Reset), style::Reset).unwrap();
+    return match response.as_str().trim() {
+        "1" => Games::AttilaTotalWar,
+        "2" => Games::RomeIiTotalWar,
+        _ => panic!("INVALID INPUT, IMPOSSIBLE TO READ THE GAME, please insert number 1 - 4")
     }
-    else {
-        writeln!(handle, "{}{}{}", color::Fg(color::Red), title, color::Fg(color::Reset)).unwrap();
-    }
-
-    stdout.flush().unwrap()
 }
+
