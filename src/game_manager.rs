@@ -1,38 +1,51 @@
+use std::fmt::{Display, Error, Formatter};
 use std::fs;
+use std::path::PathBuf;
 
 pub enum Games {
-    RomeIiTotalWar,
+    RomeIITotalWar,
     AttilaTotalWar
 }
 
 pub struct Game {
-    name: String,
-    data_directories: String,
-    user_script_directories: String,
-    already_present_pack_files: Vec<String>,
-    enabled_mods: Vec<String>
+    pub name: String,
+    pub data_directories: Option<String>,
+    pub user_script_directories: Option<String>,
+    pub already_present_pack_files: Vec<String>,
+    pub enabled_mods: Vec<String>
 }
 
 impl Game {
-    fn read_all_available_mods_in_data_directory(&mut self)  {
-        if let Ok(entries) = fs::read_dir(&self.data_directories) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    if entry.path().is_file() && entry.path().extension() == Some("pack".as_ref()) {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if !self.already_present_pack_files.contains(&file_name.to_string()) {
-                                &self.enabled_mods.push(file_name.to_string());
-                            }
-                        }
+    fn get_user_script_directory(&self) -> String {
+        let data_directory_path = self.data_directories.as_ref().expect("ERROR: IMPOSSIBLE to read available mods because you have not set the game directories!!");
+        let mut data_directory_buff = PathBuf::from(data_directory_path);
+        data_directory_buff.push("user.script.txt");
+        data_directory_buff.to_str().expect("Error trying to parse user script directory, try to insert it again").to_string()
+    }
+
+    fn read_all_available_mods_in_data_directory(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let data_directory = self.data_directories.clone().expect("ERROR: IMPOSSIBLE to read available mods because \
+        you have not set the game data directory, insert it again").to_string();
+        let entries = fs::read_dir(data_directory)?;
+
+        for entry in entries {
+            let entry = entry?;
+            if entry.path().is_file() && entry.path().extension() == Some("pack".as_ref()) {
+                if let Some(file_name) = entry.file_name().to_str() {
+                    if !self.already_present_pack_files.contains(&file_name.to_string()) {
+                        self.enabled_mods.push(file_name.to_string());
                     }
                 }
             }
         }
+
+        Ok(())
     }
 
+
     pub fn apply_mods(&mut self) {
-        println!("trying to read mods data directory");
-        self.read_all_available_mods_in_data_directory();
+        println!("Trying to read mods data directory");
+        self.read_all_available_mods_in_data_directory().unwrap_or_else(|error| panic!("Error trying to read available mods: {}", error));
         println!("Found the following mods");
         for enabled_mod in &self.enabled_mods {
             println!("{}", enabled_mod)
@@ -40,12 +53,12 @@ impl Game {
     }
 }
 
-pub fn map_enum_to_struct(game_to_map: &Games, game_directories: (String, String)) -> Game {
+pub fn map_enum_to_game(game_to_map: &Games, game_data_directory: Option<String>, game_user_script_directory: Option<String>) -> Game {
     match game_to_map {
-        Games::RomeIiTotalWar => Game {
+        Games::RomeIITotalWar => Game {
             name: "Rome II Total War".to_string(),
-            data_directories: game_directories.0,
-            user_script_directories: game_directories.1,
+            data_directories: game_data_directory,
+            user_script_directories: game_user_script_directory,
             already_present_pack_files: vec![
                 "boot.pack", "data.pack", "data_rome2.pack", "local_en.pack", "local_en_rome2.pack",
                 "models.pack", "models_rome2.pack", "models2.pack", "models2_rome2.pack", "movies.pack",
@@ -58,8 +71,8 @@ pub fn map_enum_to_struct(game_to_map: &Games, game_directories: (String, String
         },
         Games::AttilaTotalWar => Game {
             name: "Attila Total War".to_string(),
-            data_directories: game_directories.0,
-            user_script_directories: game_directories.1,
+            data_directories: game_data_directory,
+            user_script_directories: game_user_script_directory,
             already_present_pack_files: vec![
                 "boot.pack", "data.pack", "local_en.pack", "local_en_shared_rome2.pack", "models.pack",
                 "models2.pack", "models3.pack", "movies.pack", "music.pack", "music_en.pack",

@@ -1,8 +1,18 @@
-use std::io;
 use std::io::{stdin, stdout, Write};
 use termion::{color, style, terminal_size};
-use crate::game_manager::Games;
-use crate::user_config_manager::{find_if_mods_path_file_is_present, find_mods_path_written_in_file, save_directories_paths_in_file};
+use crate::game_manager::{Game, Games};
+use crate::user_config_manager::{find_game_mods_paths_in_user_config_file, save_directories_in_config_file};
+
+
+fn print_red_string(text: &str) {
+    let mut stdout = stdout();
+    let mut handle = stdout.lock();
+
+    writeln!(handle, "{}{}{}", color::Fg(color::Red), text, style::Reset).expect("Failed to write to stdout");
+    handle.flush().expect("Failed to flush stdout");
+}
+
+
 
 pub fn print_title() {
     let title = "TOTAL WAR MOD MANAGER";
@@ -18,32 +28,37 @@ pub fn print_title() {
     else {
         writeln!(handle, "{}{}{}", color::Fg(color::Red), title, color::Fg(color::Reset)).unwrap();
     }
-
+    println!("ATTENTION, the mod manager will enable every mod it find in the data directory of the game, \
+    so take out of the data folder every mod you would not like to enable");
+    println!();
+    println!("ATTENTION, every mod files name should be in lowercase, the mod manager in the process of applying the mod will \
+    rename all of the mods to lowercase if found some in uppercase");
     stdout.flush().unwrap()
 }
 
 
-pub fn ask_for_directories_dialogue() -> (String, String) {
-    println!();
-    return if find_if_mods_path_file_is_present() {
-        println!("A file with the paths of the game directory and user script has been found, would you like to use it?");
-        if user_prompt_yes() {
-            find_mods_path_written_in_file()
-        }
-        else {
-            aks_for_directories_path()
+pub fn ask_for_game_directories_dialogue(chosen_game: &mut Game) -> &mut Game {
+    print_red_string("\nWould you like to search in the config file if you have already saved the game path?");
+
+    if user_prompt_yes() {
+        return if let Some(mut paths) = find_game_mods_paths_in_user_config_file(chosen_game) {
+            chosen_game.data_directories = Some(paths.0);
+            chosen_game.user_script_directories = Some(paths.1);
+            chosen_game
+        } else {
+            println!("No config file has been found");
+            aks_for_directories_path(chosen_game)
         }
     }
-    else {
-        aks_for_directories_path()
-    }
+
+    return aks_for_directories_path(chosen_game)
 }
 
 
-pub fn aks_for_directories_path() -> (String, String) {
+
+fn aks_for_directories_path(game: &mut Game) -> &mut Game {
     let mut game_data_path = String::new();
-    print!("Please insert the game data directory path!");
-    println!();
+    print_red_string("Please insert the game data directory path!");
     stdout().flush().unwrap();
 
     stdin()
@@ -51,22 +66,25 @@ pub fn aks_for_directories_path() -> (String, String) {
     files are inserted, tw-mod-manager args1(game data path) args2(user script directory path)");
     stdout().flush().unwrap();
 
-    print!("Please insert the user script directory path");
-    println!();
+    print_red_string("Please insert the user script directory path");
     stdout().flush().unwrap();
 
     let mut user_script_directory = String::new();
-    io::stdin().read_line(&mut user_script_directory).expect("You must pass the user script directory path of the game");
+    stdin().read_line(&mut user_script_directory).expect("You must pass the user script directory path of the game");
     stdout().flush().unwrap();
 
-    println!("Directory correctly received, would you like to save them for the next boot?");
+    print_red_string("Directory correctly received, would you like to save them for the next boot?");
     stdout().flush().unwrap();
+    game_data_path.truncate(game_data_path.len() - 1);
+    user_script_directory.truncate(user_script_directory.len() - 1);
+    game.data_directories = Some(game_data_path);
+    game.user_script_directories = Some(user_script_directory);
 
     if user_prompt_yes() {
-        save_directories_paths_in_file(game_data_path.clone(),user_script_directory.clone())
+        save_directories_in_config_file(game);
     }
 
-    (game_data_path, String::new())
+    game
 }
 
 pub fn user_prompt_yes() -> bool {
@@ -80,7 +98,7 @@ pub fn user_prompt_yes() -> bool {
 
 pub fn ask_user_what_games() -> Games {
     let mut response = String::new();
-    println!("What game do you want to enable the mod for?");
+    print_red_string("What game do you want to enable the mod for?");
     println!("1: Attila Total War");
     println!("2: Rome II Total War");
     println!("3: Napoleon Total War");
@@ -90,7 +108,7 @@ pub fn ask_user_what_games() -> Games {
 
     return match response.as_str().trim() {
         "1" => Games::AttilaTotalWar,
-        "2" => Games::RomeIiTotalWar,
+        "2" => Games::RomeIITotalWar,
         _ => panic!("INVALID INPUT, IMPOSSIBLE TO READ THE GAME, please insert number 1 - 4")
     }
 }
