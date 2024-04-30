@@ -4,7 +4,7 @@ use crate::game_manager::{Game, Games};
 use crate::user_config_manager::{find_game_mods_paths_in_user_config_file, save_directories_in_config_file};
 
 
-fn print_red_string(text: &str) {
+pub fn print_red_string(text: &str) {
     let mut stdout = stdout();
     let mut handle = stdout.lock();
 
@@ -33,6 +33,8 @@ pub fn print_title() {
     println!();
     println!("ATTENTION, every mod files name should be in lowercase, the mod manager in the process of applying the mod will \
     rename all of the mods to lowercase if found some in uppercase");
+    println!();
+    println!("ATTENTION, the mod manager only support .pack mod files, if it find some .BIN files (outdated mod format) then it will automatically convert to .pack file");
     stdout.flush().unwrap()
 }
 
@@ -73,10 +75,13 @@ fn aks_for_directories_path(game: &mut Game) -> &mut Game {
     stdin().read_line(&mut user_script_directory).expect("You must pass the user script directory path of the game");
     stdout().flush().unwrap();
 
-    print_red_string("Directory correctly received, would you like to save them for the next boot?");
+    print_red_string("Directory correctly received, would you like to save them in the config file? (YOU WILL NOT HAVE TO WRITE THEM AGAIN, \
+    THEY WILL BE AUTOMATICALLY ASSOCIATED WITH THE GAME YOU SELECTED");
     stdout().flush().unwrap();
+    // eliminate \n from the path with truncate()
     game_data_path.truncate(game_data_path.len() - 1);
     user_script_directory.truncate(user_script_directory.len() - 1);
+
     game.data_directories = Some(game_data_path);
     game.user_script_directories = Some(user_script_directory);
 

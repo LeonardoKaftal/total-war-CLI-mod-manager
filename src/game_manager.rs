@@ -1,6 +1,9 @@
 use std::fmt::{Display, Error, Formatter};
 use std::fs;
+use std::fs::{DirEntry, File};
+use std::io::Write;
 use std::path::PathBuf;
+use crate::dialogue_manager::print_red_string;
 
 pub enum Games {
     RomeIITotalWar,
@@ -16,11 +19,11 @@ pub struct Game {
 }
 
 impl Game {
-    fn get_user_script_directory(&self) -> String {
-        let data_directory_path = self.data_directories.as_ref().expect("ERROR: IMPOSSIBLE to read available mods because you have not set the game directories!!");
-        let mut data_directory_buff = PathBuf::from(data_directory_path);
-        data_directory_buff.push("user.script.txt");
-        data_directory_buff.to_str().expect("Error trying to parse user script directory, try to insert it again").to_string()
+    fn get_user_script_file_path(&self) -> String {
+        let user_script_directory = self.user_script_directories.as_ref().expect("ERROR: IMPOSSIBLE to read available mods because you have not set the game directories!!");
+        let mut user_script_directory_buff = PathBuf::from(user_script_directory);
+        user_script_directory_buff.push("user.script.txt");
+        user_script_directory_buff.to_str().expect("Error trying to parse user script directory, try to insert it again").to_string()
     }
 
     fn read_all_available_mods_in_data_directory(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -37,6 +40,13 @@ impl Game {
                     }
                 }
             }
+            /*else if entry.path().is_file() && entry.path().extension() == Some("bin".as_ref()) {
+                if let Some(file_name) = entry.file_name().to_str() {
+                    print_red_string(format!("WARNING, a mod with name: {} has the \
+                    BIN mod formact that is outdated for the current game, the mod manager will try to convert it", file_name));
+                    self.convert_bin_to_pack_file(entry)
+                }
+            }*/
         }
 
         Ok(())
@@ -46,12 +56,22 @@ impl Game {
     pub fn apply_mods(&mut self) {
         println!("Trying to read mods data directory");
         self.read_all_available_mods_in_data_directory().unwrap_or_else(|error| panic!("Error trying to read available mods: {}", error));
-        println!("Found the following mods");
+        println!("Applying the following mods");
+        let user_script_file_path = self.get_user_script_file_path();
+        let mut user_script_file = File::create(user_script_file_path).unwrap_or_else(|error| panic!("Impossible to overwrite user script file in the process of applying mods, ERROR: {}", error));
         for enabled_mod in &self.enabled_mods {
-            println!("{}", enabled_mod)
+            println!("{}", enabled_mod);
+            let mod_string = format!(r#"mod "{}";"#, enabled_mod);
+            user_script_file.write_all(format!("{}\n",mod_string).as_bytes()).unwrap_or_else(|error| panic!("Impossible to write mods in the user script file!!! ERROR: {}", error))
         }
     }
+
+    fn convert_bin_to_pack_file(self, file_entry: DirEntry) {
+
+    }
 }
+
+
 
 pub fn map_enum_to_game(game_to_map: &Games, game_data_directory: Option<String>, game_user_script_directory: Option<String>) -> Game {
     match game_to_map {
