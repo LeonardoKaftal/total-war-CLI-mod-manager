@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
-use std::fs;
+use std::{fs, io};
 use std::fs::{DirEntry, File};
-use std::io::Write;
+use std::io::{Read, Seek, SeekFrom, stdin, Write};
 use std::path::PathBuf;
 use crate::dialogue_manager::print_red_string;
 
@@ -33,20 +33,22 @@ impl Game {
 
         for entry in entries {
             let entry = entry?;
-            if entry.path().is_file() && entry.path().extension() == Some("pack".as_ref()) {
+            if entry.path().extension() == Some("pack".as_ref()) {
                 if let Some(file_name) = entry.file_name().to_str() {
                     if !self.already_present_pack_files.contains(&file_name.to_string()) {
                         self.enabled_mods.push(file_name.to_string());
                     }
                 }
             }
-            /*else if entry.path().is_file() && entry.path().extension() == Some("bin".as_ref()) {
+            else if entry.path().extension() == Some("bin".as_ref()) {
                 if let Some(file_name) = entry.file_name().to_str() {
                     print_red_string(format!("WARNING, a mod with name: {} has the \
-                    BIN mod formact that is outdated for the current game, the mod manager will try to convert it", file_name));
+                    BIN mod formact that is outdated for the current game, the mod manager will try to convert it", file_name).as_str());
+                    println!("Press enter to continue.......");
+                    stdin().read_line(&mut String::new()).unwrap();
                     self.convert_bin_to_pack_file(entry)
                 }
-            }*/
+            }
         }
 
         Ok(())
@@ -66,8 +68,21 @@ impl Game {
         }
     }
 
-    fn convert_bin_to_pack_file(self, file_entry: DirEntry) {
-
+    // same process of using a hex editor
+    fn convert_bin_to_pack_file(&mut self, file_entry: DirEntry) {
+        let bin_file_path = file_entry.path();
+        let pack_file_path = bin_file_path.with_extension("pack");
+        let mut bin_file = File::open(&bin_file_path).unwrap_or_else(|error| panic!("Impossible to open BIN mod file, ERROR: {}", error));
+        let mut pack_file = File::create(&pack_file_path).unwrap_or_else(|error|panic!("Impossible to create .pack file in the process of converting BIN file,ERROR: {}", error));
+        bin_file.seek(SeekFrom::Start(8)).unwrap_or_else(|error| panic!("Impossible to eliminate first 7 offset of BIN file, ERROR: {}",error));
+        io::copy(&mut bin_file, &mut pack_file).unwrap_or_else(|error| panic!("Impossible to copy the content of the bin file to the pack file, ERROR: {}", error));
+        // remove old BIN file
+        fs::remove_file(file_entry.path()).unwrap();
+        println!("File successfully converted");
+        let mut new_file_name = String::from(file_entry.file_name().to_str().unwrap());
+        new_file_name.truncate(new_file_name.len() - 4);
+        new_file_name.push_str(".pack");
+        self.enabled_mods.push(new_file_name);
     }
 }
 
