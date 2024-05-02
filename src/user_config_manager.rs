@@ -2,7 +2,6 @@ use std::{env, fs, io};
 use std::fs::File;
 use std::io::{BufRead, Seek, SeekFrom, Write};
 use std::path::PathBuf;
-use termion::input::TermRead;
 use crate::game_manager::{Game, Games};
 
 // this function will return the path that represent the file that is saved in the mod manager path and in it is written the paths for mods

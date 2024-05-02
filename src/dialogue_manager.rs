@@ -1,33 +1,41 @@
 use std::io::{stdin, stdout, Write};
-use termion::{color, style, terminal_size};
+use crossterm::{ExecutableCommand, execute};
+use crossterm::cursor::{MoveToColumn, SavePosition};
+use crossterm::style::{Colors, Print, SetColors};
+use crossterm::style::Color::{Black, Red, White};
+use crossterm::terminal::size;
 use crate::game_manager::{Game, Games};
 use crate::user_config_manager::{find_game_mods_paths_in_user_config_file, save_directories_in_config_file};
 
 
 pub fn print_red_string(text: &str) {
-    let mut stdout = stdout();
-    let mut handle = stdout.lock();
-
-    writeln!(handle, "{}{}{}", color::Fg(color::Red), text, style::Reset).expect("Failed to write to stdout");
-    handle.flush().expect("Failed to flush stdout");
+    execute!(
+    stdout(),
+        SetColors(Colors::new(Red, Black)),
+        Print(format!("{}\n",text)),
+        SetColors(Colors::new(White, Black))
+    ).unwrap();
 }
 
 
 
 pub fn print_title() {
     let title = "TOTAL WAR MOD MANAGER";
+    let terminal_width = size().unwrap().1 * 10 + (size().unwrap().1 / 2);
+    let title_len = (title.len() * 2) as u16;
+    let padding = (terminal_width - title_len) / 2;
 
-    let mut stdout = stdout();
-    let mut handle = stdout.lock();
+    execute!(
+        stdout(),
+        SavePosition,
+        SetColors(Colors::new(Red, Black)),
+        MoveToColumn(padding),
+        Print(format!("{}\n", title)),
+        SetColors(Colors::new(White, Black))
+    ).expect("Impossible");
 
-    if let Ok((width, _)) = terminal_size() {
-        let padding = (width as usize - title.len()) / 2;
-        let padded_title = format!("{:padding$}{}", "", title, padding = padding);
-        writeln!(handle, "{}{}{}{}", color::Fg(color::Red), padded_title, color::Fg(color::Reset), style::Reset).unwrap();
-    }
-    else {
-        writeln!(handle, "{}{}{}", color::Fg(color::Red), title, color::Fg(color::Reset)).unwrap();
-    }
+
+
     println!("ATTENTION, the mod manager will enable every mod it find in the data directory of the game, \
     so take out of the data folder every mod you would not like to enable");
     println!();
@@ -35,7 +43,6 @@ pub fn print_title() {
     rename all of the mods to lowercase if found some in uppercase");
     println!();
     println!("ATTENTION, the mod manager only support .pack mod files, if it find some .BIN files (outdated mod format) then it will automatically convert to .pack file");
-    stdout.flush().unwrap()
 }
 
 
