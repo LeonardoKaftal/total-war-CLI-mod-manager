@@ -1,6 +1,6 @@
 use std::{env, fs, io};
 use std::fs::File;
-use std::io::{BufRead, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use crate::game_manager::Game;
 
@@ -37,7 +37,7 @@ pub fn save_directories_in_config_file(game: &Game) {
     }
 }
 
-fn eliminate_game_occurrences_from_config_file(game: &Game, config_file_path: &PathBuf) -> io::Result<(File)> {
+fn eliminate_game_occurrences_from_config_file(game: &Game, config_file_path: &PathBuf) -> io::Result<File> {
     let mut line_counter = 0;
     let mut buff: Vec<String> = Vec::new();
 

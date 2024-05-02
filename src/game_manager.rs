@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::{fs, io};
 use std::fs::{DirEntry, File};
 use std::io::{Seek, SeekFrom, stdin, Write};

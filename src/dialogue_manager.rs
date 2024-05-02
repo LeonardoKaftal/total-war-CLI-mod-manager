@@ -1,5 +1,5 @@
 use std::io::{stdin, stdout, Write};
-use crossterm::{ExecutableCommand, execute};
+use crossterm::execute;
 use crossterm::cursor::{MoveToColumn, SavePosition};
 use crossterm::style::{Colors, Print, SetColors};
 use crossterm::style::Color::{Black, Red, White};
@@ -50,7 +50,7 @@ pub fn ask_for_game_directories_dialogue(chosen_game: &mut Game) -> &mut Game {
     print_red_string("\nWould you like to search in the config file if you have already saved the game path?");
 
     if user_prompt_yes() {
-        return if let Some(mut paths) = find_game_mods_paths_in_user_config_file(chosen_game) {
+        return if let Some(paths) = find_game_mods_paths_in_user_config_file(chosen_game) {
             chosen_game.data_directories = Some(paths.0);
             chosen_game.user_script_directories = Some(paths.1);
             chosen_game
