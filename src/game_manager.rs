@@ -1,7 +1,7 @@
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::Display;
 use std::{fs, io};
 use std::fs::{DirEntry, File};
-use std::io::{Read, Seek, SeekFrom, stdin, Write};
+use std::io::{Seek, SeekFrom, stdin, Write};
 use std::path::PathBuf;
 use crate::dialogue_manager::print_red_string;
 

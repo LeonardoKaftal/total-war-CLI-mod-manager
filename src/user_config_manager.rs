@@ -1,8 +1,8 @@
 use std::{env, fs, io};
 use std::fs::File;
-use std::io::{BufRead, Seek, SeekFrom, Write};
+use std::io::{BufRead, Write};
 use std::path::PathBuf;
-use crate::game_manager::{Game, Games};
+use crate::game_manager::Game;
 
 // this function will return the path that represent the file that is saved in the mod manager path and in it is written the paths for mods
 // of the game so that the user can use them again after a boot
