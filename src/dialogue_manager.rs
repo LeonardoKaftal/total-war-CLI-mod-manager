@@ -25,7 +25,7 @@ pub fn ask_for_game_directories_dialogue(chosen_game: &mut Game) -> &mut Game {
             chosen_game.user_script_directories = Some(paths.1);
             chosen_game
         } else {
-            println!("No config file has been found");
+            println!("No config file or game path in the config file has been found");
             aks_for_directories_path(chosen_game)
         }
     }
@@ -40,10 +40,10 @@ fn aks_for_directories_path(game: &mut Game) -> &mut Game {
     print_red_string("Please insert the game data directory path!");
     stdout().flush().unwrap();
 
-    stdin()
-        .read_line(&mut game_data_path).expect("You must pass the data directory path of the game where all the game .pack \
+    stdin().read_line(&mut game_data_path).expect("You must pass the data directory path of the game where all the game .pack \
     files are inserted, tw-mod-manager args1(game data path) args2(user script directory path)");
     stdout().flush().unwrap();
+	let game_data_path = game_data_path.trim().to_string();
 
     print_red_string("Please insert the user script directory path");
     stdout().flush().unwrap();
@@ -51,13 +51,11 @@ fn aks_for_directories_path(game: &mut Game) -> &mut Game {
     let mut user_script_directory = String::new();
     stdin().read_line(&mut user_script_directory).expect("You must pass the user script directory path of the game");
     stdout().flush().unwrap();
-
+	let user_script_directory = user_script_directory.trim().to_string();
+	
     print_red_string("Directory correctly received, would you like to save them in the config file? (YOU WILL NOT HAVE TO WRITE THEM AGAIN, \
     THEY WILL BE AUTOMATICALLY ASSOCIATED WITH THE GAME YOU SELECTED");
     stdout().flush().unwrap();
-    // eliminate \n from the path with truncate()
-    game_data_path.truncate(game_data_path.len() - 1);
-    user_script_directory.truncate(user_script_directory.len() - 1);
 
     game.data_directories = Some(game_data_path);
     game.user_script_directories = Some(user_script_directory);

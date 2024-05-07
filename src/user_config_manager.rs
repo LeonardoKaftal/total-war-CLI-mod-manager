@@ -25,14 +25,14 @@ pub fn save_directories_in_config_file(game: &Game) {
 
     if let Some(mods_paths_file) = get_user_config_path() {
         if File::open(&mods_paths_file).is_err() {
-             File::create(&mods_paths_file).expect("Failed to create user config file {}");
+             File::create(&mods_paths_file).expect("Failed to create user config file");
         }
 
         let mut file = eliminate_game_occurrences_from_config_file(&game, &mods_paths_file).expect("Impossible to eliminate old occurrences of game path in the config file,\
         try create it again");
 
 
-        write_game_data_to_file(game, &mut file).expect("Failed to write game data to temporary file");
+        write_game_data_to_file(game, &mut file);
         println!("File successfully created and paths saved.");
     }
 }
@@ -61,18 +61,18 @@ fn eliminate_game_occurrences_from_config_file(game: &Game, config_file_path: &P
     Ok(config_file)
 }
 
-fn write_game_data_to_file(game: &Game, file: &mut File) -> io::Result<()> {
+fn write_game_data_to_file(game: &Game, file: &mut File) {
+    println!("Trying to write on the config file the paths, IF AN ERROR OCCUR TRY TO ELIMINATE AND TRY AGAIN (THE FILE IS LOCATED IN THE EXE DIRECTORY");
     let game_data_directory = game.data_directories.as_ref().expect("Failed to read game data path!!");
     let user_script_directory = game.user_script_directories.as_ref().expect("Failed to read user script directory!!!");
 
-    file.write_all(&format!("{}\n", &game.name).as_bytes()).unwrap_or_else(|err|  panic!("Failed to write game title in the config file!! \
-                Error: {}, impossible to save the paths in the config file:", err));
-    file.write_all(format!("{}\n", game_data_directory).as_bytes()).unwrap_or_else(|err|  panic!("Failed to write game data path in the file!! \
-                Error: {}, impossible to save the paths in the config file", err));
-    file.write_all(format!("{}\n", user_script_directory).as_bytes()).unwrap_or_else(|err| panic!("Failed to write user script path in the file!! \
-                Error: {}, impossible to save the paths in the config file", err));
+    file.write_all(&format!("{}\n", &game.name).as_bytes()).expect("Failed to write game title in the config file!! \
+    impossible to save the paths in the config file:");
+    file.write_all(format!("{}\n", game_data_directory).as_bytes()).expect( "Failed to write game data path in the file!! \
+    impossible to save the paths in the config file");
+    file.write_all(format!("{}\n", user_script_directory).as_bytes()).expect("Failed to write user script path in the file!! \
+               impossible to save the paths in the config file");
 
-    Ok(())
 }
 
 pub fn find_game_mods_paths_in_user_config_file(game: &Game) -> Option<(String, String)> {
@@ -95,7 +95,8 @@ pub fn find_game_mods_paths_in_user_config_file(game: &Game) -> Option<(String, 
                 None
             }
         }
-    } else {
+    }
+    else {
         None
     }
 }
